@@ -60,19 +60,8 @@ export class PeriodicTableComponent implements OnInit {
     
     dialogRef.afterClosed().subscribe((res: Partial<PeriodicElement> | undefined) => {
       if(res !== undefined) {
-        this.updateDataSrc(el, res, column);
+        this.periodicTableService.updateData(el, res, column).subscribe(res => this.dataSource.data = res);
       }
     })
   }
-
-  // simulation of sending PUT request to server
-  // *IMPORTANT*: This only works under condition that every value is unique. In real app it would be found by an ID. In this case other option is to search by 'position' value if it shouldn't be changeable.
-  updateDataSrc(oldValue: Partial<PeriodicElement>, newValue: Partial<PeriodicElement>, column: keyof PeriodicElement) {
-    this.periodicTableService.data.map(el => {
-      if(el[column] === oldValue) (el[column] as Partial<PeriodicElement>) = newValue;
-    })
-    this.getData();
-  }
-
-
 }
