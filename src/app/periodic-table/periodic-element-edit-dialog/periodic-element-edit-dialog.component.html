@@ -1,0 +1,12 @@
+<h2 mat-dialog-title>Edit {{ data.column }} value</h2>
+<mat-dialog-content>
+    <p>Current value: {{ data.value }}</p>
+    <mat-form-field>
+        <mat-label>New value</mat-label>
+        <input [type]="getInputType()" matInput [(ngModel)]="value">
+    </mat-form-field>
+</mat-dialog-content>
+<mat-dialog-actions>
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button mat-button [mat-dialog-close]="value()">Save</button>
+</mat-dialog-actions>
