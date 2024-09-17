@@ -10,30 +10,37 @@ import { COLUMNS } from '../shared/enums/columns.enum';
 import { CapitalizePipe } from '../shared/pipes/capitalize.pipe';
 import { MatDialog } from '@angular/material/dialog';
 import { PeriodicElementEditDialogComponent } from './periodic-element-edit-dialog/periodic-element-edit-dialog.component';
+import { map, Observable, tap } from 'rxjs';
+import { RxState } from '@rx-angular/state';
+import { AsyncPipe } from '@angular/common';
 
 @Component({
   selector: 'app-periodic-table',
   standalone: true,
   imports: [
-    MatTableModule, 
-    MatFormFieldModule, 
-    MatInputModule, 
-    MatButtonModule, 
-    MatIconModule, 
-    CapitalizePipe
+    MatTableModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    CapitalizePipe,
+    AsyncPipe
   ],
+  providers: [RxState],
   templateUrl: './periodic-table.component.html',
   styleUrl: './periodic-table.component.scss'
 })
 export class PeriodicTableComponent implements OnInit {
 
   // columns = COLUMNS; // used only in 2nd approach to table's code structure in HTML
-  dataSource: MatTableDataSource<PeriodicElement> = new MatTableDataSource();
+  elements$!: Observable<PeriodicElement[]>;
   readonly displayedColumns: (keyof PeriodicElement)[] = Object.values(COLUMNS);
   readonly dialog = inject(MatDialog);
   private filterTimeout: NodeJS.Timeout | number = 0;
 
-  constructor(private periodicTableService: PeriodicTableService) { }
+  constructor(private periodicTableService: PeriodicTableService, private state: RxState<{ elements: PeriodicElement[] }>) {
+    this.state.set({ elements: [] })
+  }
 
   ngOnInit(): void {
     this.getData();
@@ -41,7 +48,9 @@ export class PeriodicTableComponent implements OnInit {
 
   // simulation of sending GET request to server
   getData() {
-    this.periodicTableService.getData().subscribe(res => this.dataSource.data = res);
+    const data$ = this.periodicTableService.getData();
+    this.state.connect('elements', data$);
+    this.elements$ = this.state.select('elements');
   }
 
   filterData(e: KeyboardEvent) {
@@ -49,19 +58,33 @@ export class PeriodicTableComponent implements OnInit {
 
     clearTimeout(this.filterTimeout);
     this.filterTimeout = setTimeout(() => {
-      this.dataSource.filter = target.value
+      this.elements$ = this.state.select('elements').pipe(
+        // debounceTime(2000), // it causes 2s pause in updating value in edit mode after filtering, so timeout is being used instead
+        map(elements => {
+          const dataSource = new MatTableDataSource(elements);
+          dataSource.filter = target.value;
+          return dataSource.filteredData;
+        })
+      )
     }, 2000);
   }
 
-  editDataElement(el: Partial<PeriodicElement>, column: keyof PeriodicElement) {
+  editDataElement(elementProperty: Partial<PeriodicElement>, index: number, column: keyof PeriodicElement) {
     const dialogRef = this.dialog.open(PeriodicElementEditDialogComponent, {
-      data: { column, value: el }
-    })
-    
+      data: { column, value: elementProperty }
+    });
+
     dialogRef.afterClosed().subscribe((res: Partial<PeriodicElement> | undefined) => {
-      if(res !== undefined) {
-        this.periodicTableService.updateData(el, res, column).subscribe(res => this.dataSource.data = res);
+      if (res !== undefined) {
+        this.elements$ = this.elements$.pipe(
+          map(el => {
+            const updatedElements = [...el];
+            (el[index][column] as Partial<PeriodicElement>) = res;
+            return updatedElements;
+          })
+        );
       }
-    })
+    });
+
   }
 }

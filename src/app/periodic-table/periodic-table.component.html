@@ -8,7 +8,7 @@
   />
 </mat-form-field>
 
-<table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+<table mat-table [dataSource]="elements$" class="mat-elevation-z8">
 
   <!-- only if position value's supposed to be changeable - otherwise the solution below (lines 30-69) should be implemented -->
   <!-- changed approach from the Material docs for minification of the HTML code -->
@@ -16,10 +16,10 @@
   @for(column of displayedColumns; track $index) {
     <ng-container [matColumnDef]="column">
       <th mat-header-cell *matHeaderCellDef>{{ column | capitalize }}</th>
-      <td mat-cell *matCellDef="let element">
+      <td mat-cell *matCellDef="let element; let i = index">
           <div class="flex-container">
               <span>{{ element[column] }}</span>
-              <button mat-mini-fab (click)="editDataElement(element[column], column)">
+              <button mat-mini-fab (click)="editDataElement(element[column], i, column)">
                 <mat-icon>edit</mat-icon>
               </button>
           </div>
@@ -34,10 +34,10 @@
 
   <ng-container matColumnDef="name">
     <th mat-header-cell *matHeaderCellDef>Name</th>
-    <td mat-cell *matCellDef="let element">
+    <td mat-cell *matCellDef="let element let i = index">
         <div class="flex-container">
             <span>{{ element.name }}</span>
-            <button mat-mini-fab (click)="editDataElement(element.weight, columns.NAME)">
+            <button mat-mini-fab (click)="editDataElement(element.weight, i, columns.NAME)">
               <mat-icon>edit</mat-icon>
             </button>
         </div>
@@ -46,10 +46,10 @@
 
   <ng-container matColumnDef="weight">
     <th mat-header-cell *matHeaderCellDef>Weight</th>
-    <td mat-cell *matCellDef="let element">
+    <td mat-cell *matCellDef="let element let i = index">
         <div class="flex-container">
             <span>{{ element.weight }}</span>
-            <button mat-mini-fab (click)="editDataElement(element.weight, columns.WEIGHT)">
+            <button mat-mini-fab (click)="editDataElement(element.weight, i, columns.WEIGHT)">
               <mat-icon>edit</mat-icon>
             </button>
         </div>
@@ -58,10 +58,10 @@
 
   <ng-container matColumnDef="symbol">
     <th mat-header-cell *matHeaderCellDef>Symbol</th>
-    <td mat-cell *matCellDef="let element">
+    <td mat-cell *matCellDef="let element; let i = index">
         <div class="flex-container">
             <span>{{ element.symbol }}</span>
-            <button mat-mini-fab (click)="editDataElement(element, columns.SYMBOL)">
+            <button mat-mini-fab (click)="editDataElement(element, i, columns.SYMBOL)">
               <mat-icon>edit</mat-icon>
             </button>
         </div>
